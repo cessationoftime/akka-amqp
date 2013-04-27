@@ -163,9 +163,6 @@ trait QueueBinding extends Declarable[DeclaredQueueBinding] {
     val e = declaredExchange
     val dqb = if (e.name != "") { //do not queueBind when using the nameless Exchange
       val args = arguments.map(_.toMap.asJava)
-
-      println(s"${q.name} ${e.name} $routingKey")
-
       val ok = channel.queueBind(q.name, e.name, routingKey, args.getOrElse(null))
       DeclaredQueueBinding(Some(ok), q, e, undeclared)
     } else DeclaredQueueBinding(None, q, e, undeclared)
