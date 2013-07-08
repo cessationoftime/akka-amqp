@@ -1,7 +1,7 @@
 package akka.amqp
 import akka.agent.Agent
 import akka.actor.FSM.{ UnsubscribeTransitionCallBack, CurrentState, Transition, SubscribeTransitionCallBack }
-import akka.dispatch.{ Terminate }
+import akka.dispatch.sysmsg.{ Terminate }
 import akka.testkit.{ AkkaSpec, TestKit, TestFSMRef }
 import akka.actor.{ ActorSystem, PoisonPill }
 import scala.concurrent.duration._
