@@ -29,7 +29,7 @@ class AmqpExtensionImpl(implicit val _system: ActorSystem) extends Extension {
   protected val connectionStatusAgent = Agent(false)
   def isConnected = connectionStatusAgent.get
 
-  val connectionActor = _system.actorOf(Props(new ConnectionActor(settings, connectionStatusAgent)), "amqp-connection")
+  val connectionActor = _system.actorOf(Props(classOf[ConnectionActor],settings, connectionStatusAgent), "amqp-connection")
 
   def createChannel = {
     implicit val to = akka.util.Timeout(5 seconds)
