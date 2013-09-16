@@ -124,9 +124,9 @@ object ChannelActor {
   case class DeleteExchange(exchange: NamedExchange, ifUnused: Boolean)
 
   private[amqp] def apply(stashMessages: Boolean, settings: AmqpSettings) = if (stashMessages)
-    Props(new ChannelActor(settings) with Stash).withDispatcher("akka.amqp.stashing-dispatcher")
+    Props[ChannelActor](new ChannelActor(settings) with Stash).withDispatcher("akka.amqp.stashing-dispatcher")
   else
-    Props(new ChannelActor(settings) {
+    Props[ChannelActor](new ChannelActor(settings) {
       def stash(): Unit = {}
       def unstashAll(): Unit = {}
     })
@@ -190,7 +190,7 @@ private[amqp] abstract class ChannelActor(protected val settings: AmqpSettings)
     //      }
     case Event(NewChannel(channel), _ %: callbacks %: mode) ⇒
       cancelTimer("request-channel")
-      log.debug("Received channel {}", channel)
+      log.debug("Received channel [{}]", channel)
       channel.addShutdownListener(this)
       callbacks.foreach(_.apply(channel))
       goto(Available) using stateData.toAvailable(channel)
@@ -219,7 +219,7 @@ private[amqp] abstract class ChannelActor(protected val settings: AmqpSettings)
       }
       stay()
     case Event(ConnectionDisconnected, Some(channel) %: _ %: _) ⇒
-      log.warning("Connection went down of channel {}", channel)
+      log.warning("Connection went down of channel [{}]", channel)
       goto(Unavailable) using stateData.toUnavailable
     case Event(OnlyIfAvailable(callback), Some(channel) %: _ %: _) ⇒
       callback.apply(channel)
@@ -244,10 +244,10 @@ private[amqp] abstract class ChannelActor(protected val settings: AmqpSettings)
         } else { // channel error
           val channel = cause.getReference.asInstanceOf[RabbitChannel]
           if (cause.isInitiatedByApplication) {
-            log.debug("Channel {} shutdown ({})", channel, cause.getMessage)
+            log.debug("Channel [{}] shutdown [{}]", channel, cause.getMessage)
             stop()
           } else {
-            log.error(cause, "Channel {} broke down", channel)
+            log.error(cause, "Channel [{}] broke down", channel)
             context.parent ! RequestNewChannel //tell the connectionActor that a new channel is needed
             goto(Unavailable) using stateData.toUnavailable
           }
@@ -265,7 +265,7 @@ private[amqp] abstract class ChannelActor(protected val settings: AmqpSettings)
 
   def terminateWhenActive(channel: RabbitChannel) = {
 
-    log.debug("Closing channel {}", channel)
+    log.debug("Closing channel [{}]", channel)
     Exception.ignoring(classOf[AlreadyClosedException], classOf[ShutdownSignalException]) {
       channel.close()
     }

@@ -78,7 +78,7 @@ trait ChannelPublisher extends ConfirmListener { actor: ChannelActor ⇒
       val returnToSender = sender
 
       import message._
-      log.debug("Publishing confirmed on '{}': {}", exchangeName, message)
+      log.debug("Publishing confirmed on '[{}]': [{}]", exchangeName, message)
       val s = serialization.findSerializerFor(payload)
       val serialized = s.toBinary(payload)
       val seqNo = channel.getNextPublishSeqNo
@@ -98,7 +98,7 @@ trait ChannelPublisher extends ConfirmListener { actor: ChannelActor ⇒
       stay()
     case Event(PublishToExchange(message, exchangeName, false), Some(channel) %: _ %: _) ⇒
       import message._
-      log.debug("Publishing on '{}': {}", exchangeName, message)
+      log.debug("Publishing on '[{}]': [{}]", exchangeName, message)
       val s = serialization.findSerializerFor(payload)
       val serialized = s.toBinary(payload)
       channel.basicPublish(exchangeName, routingKey, mandatory, immediate, properties.getOrElse(null), serialized)
@@ -240,7 +240,7 @@ trait ChannelPublisher extends ConfirmListener { actor: ChannelActor ⇒
 //  }
 //
 //  def publishConfirmed(message: Message, timeout: Duration = settings.publisherConfirmTimeout): Future[Confirm] = {
-//    log.debug("Publishing on '{}': {}", exchangeName, message)
+//    log.debug("Publishing on '[{}]': [{}]", exchangeName, message)
 //    implicit val to = Timeout(timeout)
 //	import ExecutionContext.Implicits.global
 //    val confirmPromise = Promise[Confirm]

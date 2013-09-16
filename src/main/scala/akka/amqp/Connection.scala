@@ -89,7 +89,7 @@ class ConnectionActor private[amqp] (settings: AmqpSettings, isConnectedAgent: a
       try {
         val connection = connectionFactory.newConnection(executorService, addresses.map(RabbitAddress.parseAddress).toArray)
         connection.addShutdownListener(this)
-        log.info("Successfully connected to {}", connection)
+        log.info("Successfully connected to [{}]", connection)
         cancelTimer("reconnect")
         timeoutGenerator.reset()
 
@@ -99,7 +99,7 @@ class ConnectionActor private[amqp] (settings: AmqpSettings, isConnectedAgent: a
           log.error(e, "Error while trying to connect")
           val nextReconnectTimeout = timeoutGenerator.nextTimeoutSec(maxReconnectDelay.toSeconds.toInt)
           setTimer("reconnect", Connect, nextReconnectTimeout seconds, true)
-          log.info("Reconnecting in {} seconds...".format(nextReconnectTimeout))
+          log.info("Reconnecting in [{}] seconds...", nextReconnectTimeout)
           stay()
       }
     case Event(Disconnect, _) ⇒
@@ -126,16 +126,16 @@ class ConnectionActor private[amqp] (settings: AmqpSettings, isConnectedAgent: a
       stay() replying callback(connection)
     case Event(Disconnect, Some(connection)) ⇒
       try {
-        log.debug("Disconnecting from {}", connection)
+        log.debug("Disconnecting from [{}]", connection)
         connection.close()
-        log.info("Successfully disconnected from {}", connection)
+        log.info("Successfully disconnected from [{}]", connection)
       } catch {
         case e: Exception ⇒ log.error(e, "Error while closing connection")
       }
       goto(Disconnected)
     case Event(cause: ShutdownSignalException, Some(connection)) ⇒
       if (cause.isHardError) {
-        log.error(cause, "Connection broke down {}", connection)
+        log.error(cause, "Connection broke down [{}]", connection)
 
         //if we are going to issue another connect command.  
         //Then we should make absolutely sure this connection is shut down first. (sometimes it isn't, particularly during testing)
