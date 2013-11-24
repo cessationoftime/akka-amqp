@@ -87,7 +87,7 @@ class ConnectionActor private[amqp] (settings: AmqpSettings, isConnectedAgent: a
     case Event(Connect, _) ⇒
       log.info("Connecting to one of [{}]", addresses.mkString(", "))
       try {
-        val connection = connectionFactory.newConnection(executorService, addresses.map(RabbitAddress.parseAddress).toArray)
+        val connection = connectionFactory.newConnection(executorService, addresses.map(com.rabbitmq.client.Address.parseAddress).toArray)
         connection.addShutdownListener(this)
         log.info("Successfully connected to [{}]", connection)
         cancelTimer("reconnect")

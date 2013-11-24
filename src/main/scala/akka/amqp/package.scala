@@ -25,12 +25,12 @@ package object amqp {
   type RabbitConnection = com.rabbitmq.client.Connection
   type RabbitChannel = com.rabbitmq.client.Channel
 
-  object RabbitAddress {
-    def parseAddress = com.rabbitmq.client.Address.parseAddress _
-  }
-  class RabbitAddress(host: String, port: Int) extends com.rabbitmq.client.Address(host, port) {
-    def this(host: String) = this(host, -1)
-  }
+  //  object RabbitAddress {
+  //    def parseAddress = com.rabbitmq.client.Address.parseAddress _
+  //  }
+  //  class RabbitAddress(host: String, port: Int) extends com.rabbitmq.client.Address(host, port) {
+  //    def this(host: String) = this(host, -1)
+  //  }
 
 }
 
