@@ -11,7 +11,7 @@ import scala.concurrent.duration._
 import scala.concurrent.Future
 import reflect.ClassTag
 import akka.testkit.TestFSMRef
-import akka.testkit.AkkaSpec
+import akka.testkit.AkkaSpecForAmqp
 import akka.agent.Agent
 
 trait AmqpTest {

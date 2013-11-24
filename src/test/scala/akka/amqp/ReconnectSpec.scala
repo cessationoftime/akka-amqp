@@ -1,8 +1,8 @@
 package akka.amqp
 
-import akka.testkit.AkkaSpec
+import akka.testkit.AkkaSpecForAmqp
 
-class ReconnectSpec extends AkkaSpec {
+class ReconnectSpec extends AkkaSpecForAmqp {
 
   "ReonnectionTimeoutGenerator" should {
 

@@ -1,7 +1,7 @@
 package akka.amqp
 import scala.concurrent.ExecutionContext.Implicits.global
 import akka.actor.ActorSystem
-import akka.testkit.{ AkkaSpec, TestLatch }
+import akka.testkit.{ AkkaSpecForAmqp, TestLatch }
 import scala.concurrent.duration._
 import scala.concurrent.{ Await, Promise }
 import akka.testkit.TestFSMRef
@@ -18,7 +18,7 @@ import akka.testkit.TestKit
 import akka.testkit.ImplicitSender
 class PublisherSpec extends WordSpec with MustMatchers with BeforeAndAfterAll {
 
-  class PublisherScope extends AkkaSpec(AmqpConfig.Valid.config) with ImplicitSender {
+  class PublisherScope extends AkkaSpecForAmqp(AmqpConfig.Valid.config) with ImplicitSender {
     implicit val timeout = akka.util.Timeout(5 seconds)
     val ext = AmqpExtension(system)
     ext.connectionActor ! Connect
@@ -79,23 +79,24 @@ class PublisherSpec extends WordSpec with MustMatchers with BeforeAndAfterAll {
         expectMsgType[ShutdownSignalException]
       } finally { shutdown }
     }
-    "get message returned when sending with immediate flag" in new PublisherScope {
-      def exchange = Exchange.nameless
-
-      try {
-        //  val latch = TestLatch()
-        channelActor ! Publisher(Some(testActor))
-        //        publisher.onReturn { returnedMessage ⇒
-        //          latch.open()
-        //        }
-        channelActor ! PublishToExchange(Message("test".getBytes, "1.2.3Immediate", immediate = true), exchange.name)
-        //publisher.publish(Message("test".getBytes, "1.2.3", immediate = true))
-        expectMsgPF[ReturnedMessage](5 seconds) {
-          case m @ ReturnedMessage(313, "NO_CONSUMERS", _, "1.2.3Immediate", _, _) ⇒ m
-        }
-      } finally { shutdown }
-
-    }
+    /* Immediate flag has been deprecated in RabbitMQ 3.x.x */
+    //    "get message returned when sending with immediate flag" in new PublisherScope {
+    //      def exchange = Exchange.nameless
+    //
+    //      try {
+    //        //  val latch = TestLatch()
+    //        channelActor ! Publisher(Some(testActor))
+    //        //        publisher.onReturn { returnedMessage ⇒
+    //        //          latch.open()
+    //        //        }
+    //        channelActor ! PublishToExchange(Message("test".getBytes, "1.2.3Immediate", immediate = true), exchange.name)
+    //        //publisher.publish(Message("test".getBytes, "1.2.3", immediate = true))
+    //        expectMsgPF[ReturnedMessage](5 seconds) {
+    //          case m @ ReturnedMessage(313, "NO_CONSUMERS", _, "1.2.3Immediate", _, _) ⇒ m
+    //        }
+    //      } finally { shutdown }
+    //
+    //    }
     "get message returned when sending with mandatory flag" in new PublisherScope {
       def exchange = Exchange.nameless
       try {

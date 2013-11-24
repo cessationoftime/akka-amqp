@@ -2,10 +2,9 @@ package akka.amqp
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import akka.actor.ActorSystem
-import akka.testkit.{ AkkaSpec, TestLatch }
+import akka.testkit.{ AkkaSpecForAmqp, TestLatch }
 import scala.concurrent.duration._
 import scala.concurrent.{ Await, Promise }
-import akka.testkit.AkkaSpec
 import akka.testkit.TestFSMRef
 import ChannelActor._
 import org.mockito.Matchers._
@@ -19,7 +18,7 @@ import org.scalatest.WordSpec
 import org.scalatest.matchers.MustMatchers
 class ConsumerSpec extends WordSpec with MustMatchers with BeforeAndAfterAll {
 
-  class ConsumerScope extends AkkaSpec(AmqpConfig.Valid.config) with ImplicitSender {
+  class ConsumerScope extends AkkaSpecForAmqp(AmqpConfig.Valid.config) with ImplicitSender {
     implicit val timeout = akka.util.Timeout(5 seconds)
     val ext = AmqpExtension(system)
     ext.connectionActor ! Connect

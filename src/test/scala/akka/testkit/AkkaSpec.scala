@@ -5,7 +5,7 @@ package akka.testkit
 
 import language.{ postfixOps, reflectiveCalls }
 import scala.concurrent.Future
-import org.scalatest.{ WordSpec, BeforeAndAfterAll, Tag }
+import org.scalatest.{ WordSpecLike, BeforeAndAfterAll, Tag }
 import org.scalatest.matchers.MustMatchers
 import _root_.akka.actor.{ Actor, ActorRef, Props, ActorSystem, PoisonPill, DeadLetter }
 import _root_.akka.event.{ Logging, LoggingAdapter }
@@ -17,10 +17,10 @@ import _root_.akka.dispatch.{ MessageDispatcher, Dispatchers }
 import _root_.akka.pattern.ask
 import _root_.akka.actor.ActorSystemImpl
 
-object TimingTest extends Tag("timing")
-object LongRunningTest extends Tag("long-running")
+object TimingTestForAmqp extends Tag("timing")
+object LongRunningTestForAmqp extends Tag("long-running")
 
-object AkkaSpec {
+object AkkaSpecForAmqp {
   val testConf: Config = ConfigFactory.parseString("""
       akka {
         event-handlers = ["akka.testkit.TestEventListener"]
@@ -45,7 +45,7 @@ object AkkaSpec {
   }
 
   def getCallerName(clazz: Class[_]): String = {
-    val s = Thread.currentThread.getStackTrace map (_.getClassName) drop 1 dropWhile (_ matches ".*AkkaSpec.?$")
+    val s = Thread.currentThread.getStackTrace map (_.getClassName) drop 1 dropWhile (_ matches ".*AkkaSpecForAmqp.?$")
     val reduced = s.lastIndexWhere(_ == clazz.getName) match {
       case -1 ⇒ s
       case z  ⇒ s drop (z + 1)
@@ -55,17 +55,17 @@ object AkkaSpec {
 
 }
 
-abstract class AkkaSpec(_system: ActorSystem)
-  extends TestKit(_system) with WordSpec with MustMatchers with BeforeAndAfterAll {
+abstract class AkkaSpecForAmqp(_system: ActorSystem)
+  extends TestKit(_system) with WordSpecLike with MustMatchers with BeforeAndAfterAll {
 
-  def this(config: Config) = this(ActorSystem(AkkaSpec.getCallerName(getClass).filterNot(_ == '_'),
-    ConfigFactory.load(config.withFallback(AkkaSpec.testConf))))
+  def this(config: Config) = this(ActorSystem(AkkaSpecForAmqp.getCallerName(getClass).filterNot(_ == '_'),
+    ConfigFactory.load(config.withFallback(AkkaSpecForAmqp.testConf))))
 
   def this(s: String) = this(ConfigFactory.parseString(s))
 
-  def this(configMap: Map[String, _]) = this(AkkaSpec.mapToConfig(configMap))
+  def this(configMap: Map[String, _]) = this(AkkaSpecForAmqp.mapToConfig(configMap))
 
-  def this() = this(ActorSystem(AkkaSpec.getCallerName(getClass).filterNot(_ == '_'), AkkaSpec.testConf))
+  def this() = this(ActorSystem(AkkaSpecForAmqp.getCallerName(getClass).filterNot(_ == '_'), AkkaSpecForAmqp.testConf))
 
   val log: LoggingAdapter = Logging(system, this.getClass)
 
@@ -95,12 +95,12 @@ abstract class AkkaSpec(_system: ActorSystem)
 }
 
 @org.junit.runner.RunWith(classOf[org.scalatest.junit.JUnitRunner])
-class AkkaSpecSpec extends WordSpec with MustMatchers {
+class AkkaSpecForAmqpSpec extends WordSpecLike with MustMatchers {
 
   "An AkkaSpec" must {
 
     "warn about unhandled messages" in {
-      implicit val system = ActorSystem("AkkaSpec0", AkkaSpec.testConf)
+      implicit val system = ActorSystem("AkkaSpec0", AkkaSpecForAmqp.testConf)
       try {
         val a = system.actorOf(Props.empty)
         EventFilter.warning(start = "unhandled message", occurrences = 1) intercept {
@@ -117,16 +117,16 @@ class AkkaSpecSpec extends WordSpec with MustMatchers {
       val conf = Map(
         "akka.actor.debug.lifecycle" -> true, "akka.actor.debug.event-stream" -> true,
         "akka.loglevel" -> "DEBUG", "akka.stdout-loglevel" -> "DEBUG")
-      val system = ActorSystem("AkkaSpec1", ConfigFactory.parseMap(conf.asJava).withFallback(AkkaSpec.testConf))
-      val spec = new AkkaSpec(system) { val ref = Seq(testActor, system.actorOf(Props.empty, "name")) }
+      val system = ActorSystem("AkkaSpecForAmqp1", ConfigFactory.parseMap(conf.asJava).withFallback(AkkaSpecForAmqp.testConf))
+      val spec = new AkkaSpecForAmqp(system) { val ref = Seq(testActor, system.actorOf(Props.empty, "name")) }
       spec.ref foreach (_.isTerminated must not be true)
       system.shutdown()
       spec.awaitCond(spec.ref forall (_.isTerminated), 2 seconds)
     }
 
     "must stop correctly when sending PoisonPill to rootGuardian" in {
-      val system = ActorSystem("AkkaSpec2", AkkaSpec.testConf)
-      val spec = new AkkaSpec(system) {}
+      val system = ActorSystem("AkkaSpecForAmqp2", AkkaSpecForAmqp.testConf)
+      val spec = new AkkaSpecForAmqp(system) {}
       val latch = new TestLatch(1)(system)
       system.registerOnTermination(latch.countDown())
 
@@ -136,7 +136,7 @@ class AkkaSpecSpec extends WordSpec with MustMatchers {
     }
 
     "must enqueue unread messages from testActor to deadLetters" in {
-      val system, otherSystem = ActorSystem("AkkaSpec3", AkkaSpec.testConf)
+      val system, otherSystem = ActorSystem("AkkaSpecForAmqp3", AkkaSpecForAmqp.testConf)
 
       try {
         var locker = Seq.empty[DeadLetter]

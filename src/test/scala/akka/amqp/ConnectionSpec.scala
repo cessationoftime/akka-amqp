@@ -2,7 +2,7 @@ package akka.amqp
 import akka.agent.Agent
 import akka.actor.FSM.{ UnsubscribeTransitionCallBack, CurrentState, Transition, SubscribeTransitionCallBack }
 import akka.dispatch.sysmsg.{ Terminate }
-import akka.testkit.{ AkkaSpec, TestKit, TestFSMRef }
+import akka.testkit.{ AkkaSpecForAmqp, TestKit, TestFSMRef }
 import akka.actor.{ ActorSystem, PoisonPill }
 import scala.concurrent.duration._
 import scala.concurrent.{ Await }
@@ -15,7 +15,7 @@ import org.scalatest.matchers.MustMatchers
 import scala.concurrent.ExecutionContext.Implicits.global
 class ValidConnectionSpec extends WordSpec with MustMatchers with BeforeAndAfterAll {
 
-  abstract class AkkaScope extends AkkaSpec(AmqpConfig.Valid.config) with AmqpTest {
+  abstract class AkkaScope extends AkkaSpecForAmqp(AmqpConfig.Valid.config) with AmqpTest {
     val connectionStatusAgent = Agent(false)
     val connectionActor = TestFSMRef(new ConnectionActor(AmqpConfig.Valid.settings, connectionStatusAgent))
     def isConnected = Await.result(connectionStatusAgent.future, 5 seconds)
@@ -130,7 +130,7 @@ class ValidConnectionSpec extends WordSpec with MustMatchers with BeforeAndAfter
   }
 }
 
-class NoConnectionSpec extends AkkaSpec(AmqpConfig.Invalid.config) {
+class NoConnectionSpec extends AkkaSpecForAmqp(AmqpConfig.Invalid.config) {
   "Durable Connection" should {
     "never connect using non existing host addresses" in {
       val connectionStatusAgent = akka.agent.Agent(false)
