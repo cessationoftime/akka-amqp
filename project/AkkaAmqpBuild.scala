@@ -21,11 +21,12 @@ object AkkaAmqpBuild extends Build {
   }
   
   lazy val standardSettings = Project.defaultSettings ++ formatSettings ++ Seq(
+    resolvers += "Scalaz Bintray Repo" at "http://dl.bintray.com/scalaz/releases",
   	resolvers += "Typesafe Repo" at "http://repo.typesafe.com/typesafe/releases/",
     resolvers += "Sonatype OSS Snapshots" at "http://oss.sonatype.org/content/repositories/releases/",
     organization := "com.github.cessationoftime",
-    version			 := "2.2-SNAPSHOT",
-    scalaVersion := "2.10.2"
+    version			 := "2.3.6",
+    scalaVersion := "2.11.2"
   )
 
   //  lazy val amqp = Project(
