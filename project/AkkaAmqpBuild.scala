@@ -5,7 +5,6 @@ import com.typesafe.sbt.SbtScalariform.ScalariformKeys
 
 object AkkaAmqpBuild extends Build {
   import dependencies._
- 
 
     lazy val formatSettings = SbtScalariform.scalariformSettings ++ Seq(
     ScalariformKeys.preferences in Compile := formattingPreferences,
@@ -25,8 +24,8 @@ object AkkaAmqpBuild extends Build {
   	resolvers += "Typesafe Repo" at "http://repo.typesafe.com/typesafe/releases/",
     resolvers += "Sonatype OSS Snapshots" at "http://oss.sonatype.org/content/repositories/releases/",
     organization := "com.github.cessationoftime",
-    version			 := "2.3.6",
-    scalaVersion := "2.11.2"
+    version			 := "2.3.5",
+    scalaVersion := "2.10.4"
   )
 
   //  lazy val amqp = Project(
