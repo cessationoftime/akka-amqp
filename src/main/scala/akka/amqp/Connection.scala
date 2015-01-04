@@ -1,16 +1,17 @@
 package akka.amqp
-import scala.concurrent.Future
-import akka.actor.FSM.{ CurrentState, Transition, SubscribeTransitionCallBack }
-import scala.concurrent.{ ExecutionContext, Promise }
-import scala.concurrent.duration._
+
 import java.lang.Thread
+import java.util.concurrent.Executors
+import java.util.concurrent.ThreadFactory
 import java.util.concurrent.atomic.AtomicInteger
-import java.util.concurrent.{ ThreadFactory, Executors }
-import akka.actor._
-import akka.util.Timeout
-import akka.pattern.ask
-import java.io.IOException
-import util.control.Exception
+
+import scala.concurrent.duration.DurationInt
+import scala.util.control.Exception
+
+import akka.actor.Actor
+import akka.actor.ActorRef
+import akka.actor.FSM
+import akka.actor.actorRef2Scala
 
 sealed trait ConnectionState
 case object Disconnected extends ConnectionState
@@ -20,6 +21,10 @@ sealed trait ConnectionMessage
 case object Connect extends ConnectionMessage
 case object Disconnect extends ConnectionMessage
 case class WithConnection[T](callback: RabbitConnection ⇒ T) extends ConnectionMessage
+
+sealed trait ConnectionNegotiationStatus
+case object ConnectionSucceeded extends ConnectionNegotiationStatus
+case class ConnectionFailed(nextAttemptIn: Int) extends ConnectionNegotiationStatus
 
 private[amqp] class ReconnectTimeoutGenerator {
 
@@ -82,12 +87,13 @@ class ConnectionActor private[amqp] (settings: AmqpSettings, isConnectedAgent: a
   when(Disconnected) {
     case Event(CreateChannel(stashMessages), _) ⇒
       val channelActor = newChannelActor(stashMessages)
-      sender ! channelActor //return channelActor to sender, but in a disconnected state
+      sender ! channelActor /* return channelActor to sender, but in a disconnected state */
       stay()
     case Event(Connect, _) ⇒
       log.info("Connecting to one of [{}]", addresses.mkString(", "))
       try {
-        val connection = connectionFactory.newConnection(executorService, addresses.map(com.rabbitmq.client.Address.parseAddress).toArray)
+        val addressArray = addresses.map(com.rabbitmq.client.Address.parseAddress).toArray
+        val connection = connectionFactory.newConnection(executorService, addressArray)
         connection.addShutdownListener(this)
         log.info("Successfully connected to [{}]", connection)
         cancelTimer("reconnect")
@@ -96,10 +102,13 @@ class ConnectionActor private[amqp] (settings: AmqpSettings, isConnectedAgent: a
         goto(Connected) using Some(connection)
       } catch {
         case e: Exception ⇒
+          val nextReconnectDelayAsInt = maxReconnectDelay.toSeconds.toInt
+          val nextReconnectTimeout = timeoutGenerator.nextTimeoutSec(nextReconnectDelayAsInt)
+          val connectionFailedMessage = ConnectionFailed(nextReconnectTimeout)
           log.error(e, "Error while trying to connect")
-          val nextReconnectTimeout = timeoutGenerator.nextTimeoutSec(maxReconnectDelay.toSeconds.toInt)
           setTimer("reconnect", Connect, nextReconnectTimeout seconds, true)
           log.info("Reconnecting in [{}] seconds...", nextReconnectTimeout)
+          context.system.eventStream.publish(connectionFailedMessage)
           stay()
       }
     case Event(Disconnect, _) ⇒
@@ -112,12 +121,12 @@ class ConnectionActor private[amqp] (settings: AmqpSettings, isConnectedAgent: a
 
   when(Connected) {
     case Event(RequestNewChannel, Some(connection)) ⇒
-      //a channel must have broken, send the ChannelActor back a new one.
+      /* a channel must have broken, send the ChannelActor back a new one. */
       sender ! NewChannel(connection.createChannel)
       stay()
     case Event(CreateChannel(persistent), Some(connection)) ⇒
       val channelActor = newChannelActor(persistent)
-      //give the channelActor it's first channel
+      /* give the channelActor its first channel */
       channelActor ! NewChannel(connection.createChannel)
       sender ! channelActor //return channelActor to sender
       stay()
@@ -188,12 +197,6 @@ class ConnectionActor private[amqp] (settings: AmqpSettings, isConnectedAgent: a
 
 private[amqp] case class NewChannel(channel: RabbitChannel)
 private[amqp] object ConnectionDisconnected
-//private[amqp] object ConnectionConnected {
-//  def unapply(msg: Any) = msg match {
-//    case Transition(connection, _, Connected) ⇒ Some(connection)
-//    case CurrentState(connection, Connected)  ⇒ Some(connection)
-//    case _                                    ⇒ None
-//  }
 //}
 //
 //private[amqp] object ConnectionDisconnected {

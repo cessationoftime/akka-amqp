@@ -32,7 +32,8 @@ class ExchangeDeclarationMode private[amqp] (val name: String) {
              durable: Boolean = false,
              autoDelete: Boolean = false,
              internal: Boolean = false,
-             arguments: Option[Map[String, AnyRef]] = None) = ActiveUndeclaredExchange(name, exchangeType, durable, autoDelete, internal, arguments)
+             arguments: Option[Map[String, AnyRef]] = None) =
+    ActiveUndeclaredExchange(name, exchangeType, durable, autoDelete, internal, arguments)
   def passive = PassiveUndeclaredExchange(name)
   /**
    * create an exchange that will not declare itself with the AMQP server if you call the declare method.
