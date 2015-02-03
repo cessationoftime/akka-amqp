@@ -264,12 +264,10 @@ private[amqp] abstract class ChannelActor(protected val settings: AmqpSettings)
   }
 
   def terminateWhenActive(channel: RabbitChannel) = {
-
     log.debug("Closing channel [{}]", channel)
     Exception.ignoring(classOf[AlreadyClosedException], classOf[ShutdownSignalException]) {
       channel.close()
     }
-
   }
 
   onTermination {

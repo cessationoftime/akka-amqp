@@ -2,6 +2,8 @@ import sbt._
 import Keys._
 import com.typesafe.sbt.SbtScalariform
 import com.typesafe.sbt.SbtScalariform.ScalariformKeys
+import com.typesafe.sbteclipse.plugin.EclipsePlugin.EclipseKeys
+import com.typesafe.sbteclipse.plugin.EclipsePlugin.EclipseExecutionEnvironment
 
 object AkkaAmqpBuild extends Build {
   import dependencies._
